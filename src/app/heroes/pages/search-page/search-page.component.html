@@ -1,1 +1,24 @@
-<p>search-page works!</p>
+<div class="flex flex-column p-2">
+  <h3>Buscador</h3>
+
+  <mat-form-field>
+    <mat-label>Buscador de héroes</mat-label>
+    <input
+      type="text"
+      matInput
+      [formControl]="searchInput"
+      (input)="searchHeroes()"
+      [matAutocomplete]="auto">
+  </mat-form-field>
+  <mat-autocomplete autoActiveFirstOption #auto="matAutocomplete" (optionSelected)="onSelectedOption($event)">
+    @for ( hero of heroes; track hero.id) {
+      <mat-option [value]="hero">{{ hero.superhero }}</mat-option>
+    }
+    @empty {
+      <mat-option disabled>No heroes found</mat-option>
+    }
+  </mat-autocomplete>
+
+  {{ selectedHero | json }}
+
+</div>
