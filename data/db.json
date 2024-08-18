@@ -1,7 +1,7 @@
 {
   "users": [
     {
-      "id": 1,
+      "id": "1",
       "usuario": "John Doe",
       "email": "john.due@gmail.com"
     }
@@ -166,6 +166,15 @@
       "alter_ego": "Norrin Radd",
       "first_appearance": "The Fantastic Four #48",
       "characters": "Norrin Radd"
+    },
+    {
+      "id": "",
+      "superhero": "Samuel",
+      "publisher": "DC Comics",
+      "alter_ego": "Messi",
+      "first_appearance": "Comic Fifa 2024",
+      "characters": "Samuel Felipe",
+      "alt_img": "https://imgs.search.brave.com/4S_nE6YnOTzEuMcZ2cqSA7BpJQSIAkfPHNIkG3EkVOE/rs:fit:500:0:0:0/g:ce/aHR0cHM6Ly9pbWcu/YS50cmFuc2Zlcm1h/cmt0LnRlY2hub2xv/Z3kvcG9ydHJhaXQv/YmlnLzI4MDAzLTE3/MTAwODAzMzkuanBn/P2xtPTE"
     }
   ]
 }
