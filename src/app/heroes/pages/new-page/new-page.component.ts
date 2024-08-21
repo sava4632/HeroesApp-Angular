@@ -1,31 +1,54 @@
-import { Component } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
-import { Hero, Publisher } from '../../interfaces/hero.interface';
-import { HeroesService } from '../../services/heroes.service';
+import { Component, OnInit } from "@angular/core";
+import { FormControl, FormGroup } from "@angular/forms";
+import { Hero, Publisher } from "../../interfaces/hero.interface";
+import { HeroesService } from "../../services/heroes.service";
+import { ActivatedRoute, Router } from "@angular/router";
+import { filter, switchMap, tap } from "rxjs";
+import { MatSnackBar } from "@angular/material/snack-bar";
+import { MatDialog } from "@angular/material/dialog";
+import { ConfirmDialogComponent } from "../../components/confirm-dialog/confirm-dialog.component";
 
 @Component({
-  selector: 'app-new-page',
-  templateUrl: './new-page.component.html',
-  styles: ``
+  selector: "app-new-page",
+  templateUrl: "./new-page.component.html",
+  styles: ``,
 })
-export class NewPageComponent {
-
+export class NewPageComponent implements OnInit {
   public heroForm = new FormGroup({
-    id:               new FormControl<string>(''),
-    superhero:        new FormControl<string>('', { nonNullable: true }),
-    publisher:        new FormControl<Publisher>( Publisher.DCComics ),
-    alter_ego:        new FormControl(''),
-    first_appearance: new FormControl(''),
-    characters:       new FormControl(''),
-    alt_img:          new FormControl(''),
+    id: new FormControl<string>(""),
+    superhero: new FormControl<string>("", { nonNullable: true }),
+    publisher: new FormControl<Publisher>(Publisher.DCComics),
+    alter_ego: new FormControl(""),
+    first_appearance: new FormControl(""),
+    characters: new FormControl(""),
+    alt_img: new FormControl(""),
   });
-  
-  public publishers = [
-    { id: 'DC Comics', desc: 'DC - Comics' },
-    { id: 'Marvel Comics', desc: 'Marvel - Comics' }
-  ]
 
-  constructor( private heroesService: HeroesService ){}
+  public publishers = [
+    { id: "DC Comics", desc: "DC - Comics" },
+    { id: "Marvel Comics", desc: "Marvel - Comics" },
+  ];
+
+  constructor(
+    private heroesService: HeroesService,
+    private activatedRoute: ActivatedRoute,
+    private router: Router,
+    private snackabar: MatSnackBar,
+    private dialog: MatDialog,
+  ) {}
+
+  ngOnInit(): void {
+    if (!this.router.url.includes("edit")) return;
+
+    this.activatedRoute.params
+      .pipe(switchMap(({ id }) => this.heroesService.getHeroById(id)))
+      .subscribe((hero) => {
+        if (!hero) return this.router.navigateByUrl("/");
+
+        this.heroForm.reset(hero);
+        return;
+      });
+  }
 
   get currentHero(): Hero {
     const hero = this.heroForm.value as Hero;
@@ -33,21 +56,64 @@ export class NewPageComponent {
   }
 
   onSumit(): void {
+    if (this.heroForm.invalid) return;
 
-    if( this.heroForm.invalid ) return;
-    
-    if( this.currentHero.id ){
-      this.heroesService.updateHero( this.currentHero  )
-        .subscribe( hero => {
-          //TODO: mostrar snackbar
-        });
+    if (this.currentHero.id) {
+      this.heroesService.updateHero(this.currentHero).subscribe((hero) => {
+        this.showSnackbar(`${hero.superhero} updated!`);
+      });
 
-        return;
+      return;
     }
 
-    this.heroesService.addHero( this.currentHero  )
-        .subscribe( hero => {
-          //TODO: mostrar snackbar, y navegar a /heores/edit/hero.id
-        });
+    this.heroesService.addHero(this.currentHero).subscribe((hero) => {
+      this.router.navigate(["/heroes/edit/", hero.id]);
+      this.showSnackbar(`${hero.superhero} created!`);
+    });
+  }
+
+  onDeleteHero(): void {
+    if (!this.currentHero.id) throw Error("Hero id is required.");
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: this.heroForm.value,
+    });
+
+    dialogRef
+      .afterClosed()
+      .pipe(
+        filter((result: boolean) => result === true),
+        switchMap(() => this.heroesService.deleteHero(this.currentHero.id)),
+        filter((wasDeleted: boolean) => wasDeleted === true),
+        // tap((wasDeleted) => console.log({ wasDeleted })),
+      )
+      .subscribe(() => {
+        this.showSnackbar(
+          this.currentHero.superhero.concat(" has been removed"),
+        );
+        this.router.navigate(["/heroes"]);
+      });
+
+    // dialogRef.afterClosed().subscribe((result) => {
+    //   if (!result) return;
+
+    //   // console.log(this.currentHero.id);
+    //   this.heroesService
+    //     .deleteHero(this.currentHero.id)
+    //     .subscribe((wasDelited) => {
+    //       if (wasDelited) {
+    //         this.showSnackbar(
+    //           this.currentHero.superhero.concat(" has been removed"),
+    //         );
+    //         this.router.navigate(["/heroes"]);
+    //       }
+    //     });
+    // });
+  }
+
+  showSnackbar(message: string) {
+    this.snackabar.open(message, "done", {
+      duration: 2500,
+    });
   }
 }
